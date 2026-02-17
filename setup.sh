@@ -59,12 +59,14 @@ else
 
 ## Task Queue Check
 0. Record heartbeat: POST http://localhost:3333/api/heartbeat via exec (curl -X POST)
-1. Fetch http://localhost:3333/api/tasks/queue via exec (curl)
-2. If any tasks returned, pick the FIRST one (highest priority)
-3. Mark it as picked up: POST http://localhost:3333/api/tasks/{id}/pickup
-4. Spawn a sub-agent with the task: use sessions_spawn with the task title + description as the prompt. If a skill is assigned, tell the sub-agent to read that skill's SKILL.md first.
-5. When the sub-agent completes, POST to http://localhost:3333/api/tasks/{id}/complete with { "result": "<summary of what was done>" } or { "error": "<what went wrong>" } if it failed
-6. Only process ONE task per heartbeat to avoid overload
+1. Check for stuck in-progress tasks: GET http://localhost:3333/api/tasks and look for status "in-progress"
+2. For each in-progress task: check if a sub-agent completed the work (use sessions_list to find recent sub-agents, check their last message for completion). If done, POST to http://localhost:3333/api/tasks/{id}/complete with { "result": "<summary from sub-agent>" }. If the task has been in-progress for over 10 minutes with no active sub-agent, POST with { "error": "Task timed out — no active sub-agent found" }.
+3. Fetch http://localhost:3333/api/tasks/queue via exec (curl)
+4. If any tasks returned, pick the FIRST one (highest priority)
+5. Mark it as picked up: POST http://localhost:3333/api/tasks/{id}/pickup
+6. Spawn a sub-agent with the task: use sessions_spawn with the task title + description as the prompt. If a skill is assigned, tell the sub-agent to read that skill's SKILL.md first.
+7. When the sub-agent completes, POST to http://localhost:3333/api/tasks/{id}/complete with { "result": "<summary of what was done>" } or { "error": "<what went wrong>" } if it failed
+8. Only process ONE task per heartbeat to avoid overload
 HEARTBEAT_BLOCK
 fi
 
