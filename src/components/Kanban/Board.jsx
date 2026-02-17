@@ -4,6 +4,7 @@ import { arrayMove } from '@dnd-kit/sortable'
 import Column from './Column'
 import TaskCard from './TaskCard'
 import TaskDialog from './TaskDialog'
+import { useSocket } from '../../hooks/useSocket.jsx'
 
 const COLUMNS = [
   { id: 'backlog', title: 'Backlog', color: 'bg-zinc-500' },
@@ -33,10 +34,7 @@ export default function Board() {
   }, [])
 
   useEffect(() => { fetchTasks() }, [fetchTasks])
-  useEffect(() => {
-    const interval = setInterval(fetchTasks, 30000)
-    return () => clearInterval(interval)
-  }, [fetchTasks])
+  useSocket('tasks', setTasks)
 
   const activeTask = tasks.find(t => t.id === activeId)
 

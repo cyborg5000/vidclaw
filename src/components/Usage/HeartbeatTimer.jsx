@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { HeartPulse } from 'lucide-react'
+import { useSocket } from '../../hooks/useSocket.jsx'
 
 const DEFAULT_INTERVAL_MS = 30 * 60 * 1000
 
@@ -49,9 +50,19 @@ export default function HeartbeatTimer() {
     }
     checkBeat()
     fetchInterval()
-    const iv = setInterval(checkBeat, 30000)
-    return () => clearInterval(iv)
   }, [])
+
+  useSocket('heartbeat', (data) => {
+    if (data.lastHeartbeat) {
+      setLastBeat(data.lastHeartbeat)
+      localStorage.setItem('lastHeartbeat', data.lastHeartbeat.toString())
+    }
+  })
+
+  useSocket('settings', (data) => {
+    const val = data.heartbeatInterval || data.heartbeatEvery
+    if (val) setIntervalMs(parseInterval(val))
+  })
 
   if (!lastBeat) return null
 

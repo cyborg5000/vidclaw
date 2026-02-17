@@ -3,11 +3,24 @@ import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import http from 'http';
 import { fileURLToPath } from 'url';
+import { WebSocketServer } from 'ws';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
+const server = http.createServer(app);
 const PORT = 3333;
+
+// --- WebSocket ---
+const wss = new WebSocketServer({ server });
+
+function broadcast(type, data) {
+  const msg = JSON.stringify({ type, data });
+  for (const client of wss.clients) {
+    if (client.readyState === 1) client.send(msg);
+  }
+}
 const TASKS_FILE = path.join(__dirname, 'data', 'tasks.json');
 const HOME = os.homedir();
 const OPENCLAW_DIR = process.env.OPENCLAW_DIR || path.join(HOME, '.openclaw');
@@ -145,6 +158,7 @@ app.post('/api/tasks', (req, res) => {
   tasks.push(task);
   writeTasks(tasks);
   logActivity('user', 'task_created', { taskId: task.id, title: task.title });
+  broadcast('tasks', tasks);
   res.json(task);
 });
 
@@ -162,6 +176,7 @@ app.put('/api/tasks/:id', (req, res) => {
   writeTasks(tasks);
   const actor = req.body._actor || 'user';
   logActivity(actor, 'task_updated', { taskId: req.params.id, title: tasks[idx].title, changes: Object.keys(updates) });
+  broadcast('tasks', tasks);
   res.json(tasks[idx]);
 });
 
@@ -175,6 +190,7 @@ app.post('/api/tasks/reorder', (req, res) => {
     if (idx !== -1) tasks[idx].order = i;
   }
   writeTasks(tasks);
+  broadcast('tasks', tasks);
   res.json({ ok: true });
 });
 
@@ -189,6 +205,7 @@ app.post('/api/tasks/:id/run', (req, res) => {
   tasks[idx].updatedAt = new Date().toISOString();
   writeTasks(tasks);
   logActivity('user', 'task_run', { taskId: req.params.id, title: tasks[idx].title });
+  broadcast('tasks', tasks);
   res.json({ success: true, message: 'Task queued for execution' });
 });
 
@@ -226,6 +243,7 @@ app.post('/api/tasks/:id/pickup', (req, res) => {
   tasks[idx].updatedAt = new Date().toISOString();
   writeTasks(tasks);
   logActivity('bot', 'task_pickup', { taskId: req.params.id, title: tasks[idx].title });
+  broadcast('tasks', tasks);
   res.json(tasks[idx]);
 });
 
@@ -240,6 +258,7 @@ app.post('/api/tasks/:id/complete', (req, res) => {
   if (req.body.error) tasks[idx].error = req.body.error;
   writeTasks(tasks);
   logActivity('bot', 'task_completed', { taskId: req.params.id, title: tasks[idx].title, hasError: !!req.body.error });
+  broadcast('tasks', tasks);
   res.json(tasks[idx]);
 });
 
@@ -249,6 +268,7 @@ app.delete('/api/tasks/:id', (req, res) => {
   tasks = tasks.filter(t => t.id !== req.params.id);
   writeTasks(tasks);
   if (deleted) logActivity('user', 'task_deleted', { taskId: req.params.id, title: deleted.title });
+  broadcast('tasks', tasks);
   res.json({ ok: true });
 });
 
@@ -488,6 +508,7 @@ app.get('/api/heartbeat', (req, res) => {
 app.post('/api/heartbeat', (req, res) => {
   const data = { lastHeartbeat: Date.now() };
   fs.writeFileSync(HEARTBEAT_FILE, JSON.stringify(data));
+  broadcast('heartbeat', data);
   res.json(data);
 });
 
@@ -803,6 +824,7 @@ app.post('/api/settings', async (req, res) => {
     if (heartbeatEvery) details.heartbeatEvery = heartbeatEvery;
     if (timezone) details.timezone = timezone;
     logActivity('dashboard', 'settings_updated', details);
+    broadcast('settings', { heartbeatEvery: heartbeatEvery || config.agents.defaults.heartbeat?.every, timezone: timezone || config.agents.defaults.timezone });
 
     // Only restart OpenClaw when heartbeat changes
     if (heartbeatChanged) {
@@ -823,6 +845,6 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
-app.listen(PORT, '127.0.0.1', () => {
+server.listen(PORT, '127.0.0.1', () => {
   console.log(`Dashboard running at http://localhost:${PORT}`);
 });
