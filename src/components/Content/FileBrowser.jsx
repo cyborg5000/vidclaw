@@ -34,8 +34,8 @@ export default function FileBrowser() {
   const breadcrumbs = currentPath ? currentPath.split('/') : []
 
   return (
-    <div className="flex gap-4 h-full">
-      <div className={cn('flex flex-col border border-border rounded-xl bg-card/50 overflow-hidden', preview ? 'w-1/3' : 'flex-1')}>
+    <div className="flex flex-col md:flex-row gap-4 h-full">
+      <div className={cn('flex flex-col border border-border rounded-xl bg-card/50 overflow-hidden', preview ? 'md:w-1/3 max-h-[50vh] md:max-h-none' : 'flex-1')}>
         <div className="flex items-center gap-2 p-3 border-b border-border text-sm">
           {currentPath && (
             <button onClick={goUp} className="text-muted-foreground hover:text-foreground transition-colors">

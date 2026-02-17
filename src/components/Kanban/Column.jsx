@@ -34,7 +34,7 @@ export default function Column({ column, tasks, onAdd, onQuickAdd, onEdit, onDel
     <div
       ref={setNodeRef}
       className={cn(
-        'flex-1 min-w-[260px] max-w-[320px] flex flex-col rounded-xl bg-card/50 border border-border transition-colors',
+        'flex-1 min-w-[240px] sm:min-w-[260px] max-w-[320px] flex flex-col rounded-xl bg-card/50 border border-border transition-colors',
         isOver && 'border-primary/50 bg-primary/5'
       )}
     >
