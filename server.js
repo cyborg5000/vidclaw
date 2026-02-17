@@ -7,7 +7,7 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
-const PORT = 3334;
+const PORT = 3333;
 const TASKS_FILE = path.join(__dirname, 'data', 'tasks.json');
 const HOME = os.homedir();
 const OPENCLAW_DIR = process.env.OPENCLAW_DIR || path.join(HOME, '.openclaw');
