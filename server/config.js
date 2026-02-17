@@ -3,11 +3,10 @@ import os from 'os';
 import { fileURLToPath } from 'url';
 
 export const __dirname = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-export const PORT = 3333;
+export const PORT = parseInt(process.env.PORT, 10) || 3333;
 export const HOME = os.homedir();
 export const OPENCLAW_DIR = process.env.OPENCLAW_DIR || path.join(HOME, '.openclaw');
 export const WORKSPACE = path.join(OPENCLAW_DIR, 'workspace');
-export const OPENCLAW_API_BASE = process.env.OPENCLAW_API || 'http://127.0.0.1:18789';
 export const OPENCLAW_JSON = path.join(OPENCLAW_DIR, 'openclaw.json');
 export const TASKS_FILE = path.join(__dirname, 'data', 'tasks.json');
 export const ACTIVITY_FILE = path.join(__dirname, 'data', 'activity.json');

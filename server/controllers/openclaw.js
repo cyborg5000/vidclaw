@@ -1,42 +1,6 @@
 import { exec as execCb } from 'child_process';
-import { OPENCLAW_API_BASE } from '../config.js';
 import { logActivity } from '../lib/fileStore.js';
-import { fetchOpenclawJson } from '../lib/openclaw.js';
 import { exec, compareSemver } from '../lib/exec.js';
-
-export async function getOpenclawUsage(req, res) {
-  const candidates = ['/api/usage', '/api/v1/usage', '/api/status', '/status'];
-  for (const ep of candidates) {
-    try {
-      const data = await fetchOpenclawJson(ep);
-      return res.json({ ...data, _source: ep });
-    } catch {}
-  }
-  res.status(502).json({
-    error: 'No JSON usage API found on OpenClaw',
-    detail: `Tried ${candidates.join(', ')} on ${OPENCLAW_API_BASE}. The /usage endpoint returns HTML (a web page), not a JSON API.`,
-    hint: 'Usage data is still available from local session file scanning.',
-  });
-}
-
-export async function getOpenclawStatus(req, res) {
-  try {
-    const data = await fetchOpenclawJson('/api/status');
-    res.json(data);
-  } catch (e) {
-    res.status(502).json({ error: 'Could not reach OpenClaw API', detail: e.message });
-  }
-}
-
-export async function proxyOpenclaw(req, res) {
-  const endpoint = '/' + req.params[0];
-  try {
-    const data = await fetchOpenclawJson(endpoint);
-    res.json(data);
-  } catch (e) {
-    res.status(502).json({ error: 'Could not reach OpenClaw API', detail: e.message });
-  }
-}
 
 export async function getOpenclawVersion(req, res) {
   const result = {};

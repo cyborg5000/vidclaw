@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { RefreshCw, Zap, ChevronDown, Coins, Hash, Cpu, AlertTriangle } from 'lucide-react'
+import { RefreshCw, Zap, ChevronDown, Coins, Hash, Cpu } from 'lucide-react'
 
 function formatTokens(n) {
   if (!n) return '0'
@@ -42,8 +42,6 @@ function ProgressBar({ label, percent, resetsIn, tokens, cost }) {
 
 export default function UsageWidget() {
   const [usage, setUsage] = useState(null)
-  const [openclawUsage, setOpenclawUsage] = useState(null)
-  const [openclawError, setOpenclawError] = useState(null)
   const [models, setModels] = useState([])
   const [loading, setLoading] = useState(false)
   const [expanded, setExpanded] = useState(false)
@@ -52,32 +50,9 @@ export default function UsageWidget() {
   const fetchUsage = useCallback(async () => {
     setLoading(true)
     try {
-      // Fetch VidClaw's own usage data (from session files)
       const res = await fetch('/api/usage')
       setUsage(await res.json())
     } catch {}
-    try {
-      // Fetch live data from OpenClaw's native API
-      const res = await fetch('/api/openclaw/usage')
-      if (res.ok) {
-        const data = await res.json()
-        setOpenclawUsage(data)
-        setOpenclawError(null)
-      } else {
-        const err = await res.json().catch(() => ({}))
-        // If the hint says local data is available, just silently use local data
-        if (err.hint) {
-          setOpenclawUsage(null)
-          setOpenclawError(null) // suppress warning — local data is working
-        } else {
-          setOpenclawError(err.detail || 'Could not reach OpenClaw')
-        }
-      }
-    } catch (e) {
-      // Network error — OpenClaw likely not running; silently fall back to local data
-      setOpenclawUsage(null)
-      setOpenclawError(null)
-    }
     setLoading(false)
   }, [])
 
@@ -102,12 +77,8 @@ export default function UsageWidget() {
 
   if (!usage) return null
 
-  // Prefer OpenClaw API model if available, fall back to config file
-  const ocModel = openclawUsage?.model || openclawUsage?.activeModel
-  const displayModel = (ocModel || usage.model || 'unknown').replace('anthropic/', '').replace('google/', '')
-
-  // Merge usage tiers: prefer OpenClaw live data if available
-  const tiers = openclawUsage?.tiers || openclawUsage?.rateLimits || usage.tiers || []
+  const displayModel = (usage.model || 'unknown').replace('anthropic/', '').replace('google/', '')
+  const tiers = usage.tiers || []
   const sessionPct = tiers[0]?.percent ?? 0
 
   // Color for collapsed pill
@@ -136,25 +107,16 @@ export default function UsageWidget() {
 
       {expanded && (
         <div className="absolute right-0 top-full mt-2 w-80 bg-card border border-border rounded-lg shadow-xl p-4 z-50 space-y-4">
-          {/* OpenClaw connection status */}
-          {openclawError && (
-            <div className="flex items-center gap-1.5 text-[10px] text-amber-400 bg-amber-500/10 rounded-md px-2 py-1.5">
-              <AlertTriangle size={10} className="shrink-0" />
-              <span>{openclawError}</span>
-            </div>
-          )}
-
           {/* Active Model */}
           <div className="space-y-1">
             <label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">Active Model</label>
             <div className="flex items-center gap-2">
               <Cpu size={12} className="text-orange-400" />
               <span className="text-sm font-medium text-foreground">{displayModel}</span>
-              {openclawUsage && <span className="text-[9px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-full">live</span>}
             </div>
             {models.length > 0 && (
               <select
-                value={ocModel || ('anthropic/' + usage.model)}
+                value={'anthropic/' + usage.model}
                 onChange={e => switchModel(e.target.value)}
                 className="w-full bg-secondary border border-border rounded px-2 py-1.5 text-xs text-foreground focus:outline-none focus:border-orange-500 mt-1"
               >
@@ -170,24 +132,11 @@ export default function UsageWidget() {
 
           {/* Usage tiers */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Usage</div>
-              {openclawUsage && <span className="text-[9px] text-muted-foreground">via OpenClaw API</span>}
-            </div>
+            <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Usage</div>
             {tiers.map((tier, i) => (
               <ProgressBar key={tier.label || i} {...tier} />
             ))}
           </div>
-
-          {/* Raw OpenClaw data if available */}
-          {openclawUsage && !openclawUsage.tiers && !openclawUsage.rateLimits && (
-            <div className="space-y-2 border-t border-border pt-3">
-              <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">OpenClaw Raw</div>
-              <pre className="text-[9px] font-mono text-muted-foreground bg-secondary/50 rounded-md p-2 max-h-32 overflow-auto">
-                {JSON.stringify(openclawUsage, null, 2)}
-              </pre>
-            </div>
-          )}
         </div>
       )}
     </div>

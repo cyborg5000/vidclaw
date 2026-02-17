@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import UsageWidget from './Usage/UsageWidget'
-import { LayoutDashboard, Calendar, FolderOpen, Puzzle, Heart, Settings, Menu, X } from 'lucide-react'
+import { LayoutDashboard, Calendar, FolderOpen, Puzzle, Heart, Settings, Menu, X, Coffee } from 'lucide-react'
 
 const navItems = [
   { id: 'kanban', label: 'Tasks', icon: LayoutDashboard },
@@ -92,7 +92,16 @@ export default function Layout({ page, setPage, children }) {
             </button>
             <span className="text-sm font-medium capitalize">{page === 'kanban' ? 'Task Board' : page === 'calendar' ? 'Activity Calendar' : page === 'skills' ? 'Skills Manager' : page === 'soul' ? 'Soul Editor' : page === 'settings' ? 'Settings' : 'Content Browser'}</span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <a
+              href="https://buy.stripe.com/8x2aEX0Wl7Wv7Roag9cEw0f"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-amber-400 transition-colors"
+            >
+              <Coffee size={12} />
+              <span className="hidden sm:inline">Buy me a coffee</span>
+            </a>
             <UsageWidget />
           </div>
         </header>

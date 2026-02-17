@@ -9,10 +9,7 @@ import {
   getCalendar,
 } from './controllers/tasks.js';
 import { getUsage } from './controllers/usage.js';
-import {
-  getOpenclawUsage, getOpenclawStatus, proxyOpenclaw,
-  getOpenclawVersion, updateOpenclaw,
-} from './controllers/openclaw.js';
+import { getOpenclawVersion, updateOpenclaw } from './controllers/openclaw.js';
 import { listModels, setModel, getHeartbeat, postHeartbeat } from './controllers/models.js';
 import { listSkills, toggleSkill, createSkill, getSkillContent, deleteSkill } from './controllers/skills.js';
 import { listFiles, getFileContent, downloadFile, getWorkspaceFile, putWorkspaceFile, getWorkspaceFileHistory } from './controllers/files.js';
@@ -41,9 +38,6 @@ router.get('/api/calendar', getCalendar);
 router.get('/api/usage', getUsage);
 
 // OpenClaw
-router.get('/api/openclaw/usage', getOpenclawUsage);
-router.get('/api/openclaw/status', getOpenclawStatus);
-router.get('/api/openclaw/proxy/*', proxyOpenclaw);
 router.get('/api/openclaw/version', getOpenclawVersion);
 router.post('/api/openclaw/update', updateOpenclaw);
 
