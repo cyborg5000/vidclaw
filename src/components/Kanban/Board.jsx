@@ -42,14 +42,21 @@ export default function Board() {
     if (!COLUMNS.find(c => c.id === columnId)) return
     const task = tasks.find(t => t.id === active.id)
     if (!task || task.status === columnId) return
-    // Only allow dragging to backlog or todo
-    if (columnId === 'in-progress' || columnId === 'done') return
-    await fetch(`/api/tasks/${task.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: columnId }),
-    })
-    fetchTasks()
+
+    // Optimistic update: move card immediately in local state
+    setTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: columnId } : t))
+
+    try {
+      await fetch(`/api/tasks/${task.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: columnId }),
+      })
+      fetchTasks()
+    } catch {
+      // Revert on failure
+      setTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: task.status } : t))
+    }
   }
 
   async function handleSave(data) {
